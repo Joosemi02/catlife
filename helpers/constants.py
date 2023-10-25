@@ -8,6 +8,7 @@ FRAME_SCHEME = (
     (8, 8, 8, 8, 8, 8, 8, 8),
     (8, 8, 8, 8, 8, 8, 8, 8),
 )
+BIG_RESOLUTION = 265
 
 # COLORS
 BLUE = 0x3498DB
