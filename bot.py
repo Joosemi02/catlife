@@ -1,9 +1,9 @@
 import logging
 import os
 from collections import namedtuple
+from logging.handlers import RotatingFileHandler
 
 import discord
-import structlog
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -32,32 +32,37 @@ class CatBot(commands.Bot):
         )
         self.activity = discord.Game("catlife!")
 
-        # Run bot
         self.setup_logging()
         self.run(kwargs["token"], log_handler=None)
 
     def setup_logging(self):
-        self.log: structlog.BoundLogger = structlog.get_logger()
-
-        formatter = structlog.stdlib.ProcessorFormatter(
-            processors=[
-                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                structlog.dev.ConsoleRenderer()
-                if self.config.DEBUG
-                else structlog.processors.JSONRenderer(),
-            ],
+        logging_format = logging.Formatter(
+            "{asctime} [{levelname:<8}] {filename}//{lineno}: {message}",
+            "%d-%m-%Y %H:%M:%S",
+            "{",
         )
+        self.log = logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
 
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
-        root_logger = logging.getLogger()
-        root_logger.addHandler(handler)
-        root_logger.setLevel(logging.INFO)
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(logging_format)
+        console_handler.setLevel(logging.INFO)
+        logger.addHandler(console_handler)
+
+        file_handler = RotatingFileHandler(
+            filename="discord.log",
+            encoding="utf-8",
+            maxBytes=5 * 1024 * 1024,  # 5 Mb
+            backupCount=3,
+        )
+        file_handler.setFormatter(logging_format)
+        file_handler.setLevel(logging.WARN)
+        logger.addHandler(file_handler)
 
     async def setup_hook(self):
         for i in cogs.default:
             await self.load_extension(f"cogs.{i}")
-        self.log.info("init")
+        self.log.info("Bot loaded")
 
 
 if __name__ == "__main__":
@@ -74,7 +79,7 @@ if __name__ == "__main__":
     load_dotenv()
 
     config = Config(
-        DATABASE_URI=os.getenv("MONGODB_URI"),
+        MONGODB_URI=os.getenv("MONGODB_URI"),
         DATABASE_NAME=os.environ["DATABASE_NAME"],
         BOT_TOKEN=os.environ["BOT_TOKEN"],
         SERVER_URL=os.environ["SERVER_URL"],
