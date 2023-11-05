@@ -37,12 +37,12 @@ class CatBot(commands.Bot):
 
     def setup_logging(self):
         logging_format = logging.Formatter(
-            "{asctime} [{levelname:<8}] {filename}//{lineno}: {message}",
+            "{asctime} {levelname:<8}: {message}",
             "%d-%m-%Y %H:%M:%S",
             "{",
         )
         self.log = logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.INFO)
 
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(logging_format)
