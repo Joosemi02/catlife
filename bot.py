@@ -1,9 +1,16 @@
+import contextlib
 import logging
 import os
 from logging.handlers import RotatingFileHandler
 
 import discord
-import uvloop
+
+uv = False
+with contextlib.suppress(ModuleNotFoundError):
+    import uvloop
+
+    uv = True
+
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -11,7 +18,8 @@ import cogs
 from helpers import constants
 from helpers.translator import CatTranslator
 
-uvloop.install()
+if uv:
+    uvloop.install()
 
 
 class CatBot(commands.Bot):
@@ -24,13 +32,6 @@ class CatBot(commands.Bot):
         def __init__(self, **kwargs):
             color = kwargs.pop("color", constants.EMBED_COLOR)
             super().__init__(**kwargs, color=color)
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.activity = discord.Game("catlife!")
-
-        self.setup_logging()
-        self.run(kwargs["token"], log_handler=None)
 
     def setup_logging(self):
         logging_format = logging.Formatter(
@@ -59,22 +60,26 @@ class CatBot(commands.Bot):
     async def setup_hook(self):
         for i in cogs.default:
             await self.load_extension(f"cogs.{i}")
-        self.tree.set_translator(CatTranslator)
+        await self.tree.set_translator(CatTranslator())
         self.log.info("Bot loaded")
+
+
+intents = discord.Intents.default()
+bot = CatBot(
+    intents=intents,
+    command_prefix=commands.when_mentioned,
+)
+bot.activity = discord.Game("catlife!")
+
+
+@bot.command()
+async def sync(ctx: commands.Context):
+    await bot.tree.sync()
+    await ctx.send("synced")
 
 
 if __name__ == "__main__":
     load_dotenv()
 
-    intents = discord.Intents.default()
-
-    bot = CatBot(
-        token=os.getenv("BOT_TOKEN"),
-        intents=intents,
-        command_prefix=commands.when_mentioned,
-    )
-
-    @bot.command()
-    async def sync(ctx: commands.Context):
-        await bot.tree.sync()
-        await ctx.send("synced")
+    bot.setup_logging()
+    bot.run(os.getenv("BOT_TOKEN"), log_handler=None)
