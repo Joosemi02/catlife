@@ -1,6 +1,5 @@
 import logging
 import os
-from collections import namedtuple
 from logging.handlers import RotatingFileHandler
 
 import discord
@@ -26,10 +25,7 @@ class CatBot(commands.Bot):
             super().__init__(**kwargs, color=color)
 
     def __init__(self, **kwargs):
-        self.config = kwargs.pop("config", None)
-        super().__init__(
-            **kwargs, command_prefix=commands.when_mentioned, strip_after_prefix=True
-        )
+        super().__init__(**kwargs)
         self.activity = discord.Game("catlife!")
 
         self.setup_logging()
@@ -66,32 +62,12 @@ class CatBot(commands.Bot):
 
 
 if __name__ == "__main__":
-    Config = namedtuple(
-        "Config",
-        [
-            "MONGODB_URI",
-            "DATABASE_NAME",
-            "BOT_TOKEN",
-            "SERVER_URL",
-        ],
-    )
-
     load_dotenv()
-
-    config = Config(
-        MONGODB_URI=os.getenv("MONGODB_URI"),
-        DATABASE_NAME=os.environ["DATABASE_NAME"],
-        BOT_TOKEN=os.environ["BOT_TOKEN"],
-        SERVER_URL=os.environ["SERVER_URL"],
-    )
 
     intents = discord.Intents.default()
 
     CatBot(
-        token=config.BOT_TOKEN,
-        case_insensitive=True,
-        member_cache_flags=discord.MemberCacheFlags.none(),
-        allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
+        token=os.getenv("BOT_TOKEN"),
         intents=intents,
-        config=config,
+        command_prefix=commands.when_mentioned,
     )
