@@ -4,6 +4,9 @@ __pycache__/
 # Environments
 .env
 
+# Logs
+*.log
+
 # Ignore local files
 archive
 uvloop.py
