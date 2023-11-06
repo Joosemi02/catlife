@@ -3,12 +3,13 @@ import os
 from logging.handlers import RotatingFileHandler
 
 import discord
+import uvloop
 from discord.ext import commands
 from dotenv import load_dotenv
 
 import cogs
-import helpers
-import uvloop
+from helpers import constants
+from helpers.translator import CatTranslator
 
 uvloop.install()
 
@@ -16,12 +17,12 @@ uvloop.install()
 class CatBot(commands.Bot):
     class BlueEmbed(discord.Embed):
         def __init__(self, **kwargs):
-            color = kwargs.pop("color", helpers.constants.BLUE)
+            color = kwargs.pop("color", constants.BLUE)
             super().__init__(**kwargs, color=color)
 
     class Embed(discord.Embed):
         def __init__(self, **kwargs):
-            color = kwargs.pop("color", helpers.constants.EMBED_COLOR)
+            color = kwargs.pop("color", constants.EMBED_COLOR)
             super().__init__(**kwargs, color=color)
 
     def __init__(self, **kwargs):
@@ -58,6 +59,7 @@ class CatBot(commands.Bot):
     async def setup_hook(self):
         for i in cogs.default:
             await self.load_extension(f"cogs.{i}")
+        self.tree.set_translator(CatTranslator)
         self.log.info("Bot loaded")
 
 
@@ -66,8 +68,13 @@ if __name__ == "__main__":
 
     intents = discord.Intents.default()
 
-    CatBot(
+    bot = CatBot(
         token=os.getenv("BOT_TOKEN"),
         intents=intents,
         command_prefix=commands.when_mentioned,
     )
+
+    @bot.command()
+    async def sync(ctx: commands.Context):
+        await bot.tree.sync()
+        await ctx.send("synced")
