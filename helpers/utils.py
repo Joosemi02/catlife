@@ -1,22 +1,23 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-import constants
 import discord
 from discord.ext import commands
 
 import cogs
 
+from .constants import BLUE, EMBED_COLOR
+
 
 class CatBot(commands.Bot):
     class BlueEmbed(discord.Embed):
         def __init__(self, **kwargs):
-            color = kwargs.pop("color", constants.BLUE)
+            color = kwargs.pop("color", BLUE)
             super().__init__(**kwargs, color=color)
 
     class Embed(discord.Embed):
         def __init__(self, **kwargs):
-            color = kwargs.pop("color", constants.EMBED_COLOR)
+            color = kwargs.pop("color", EMBED_COLOR)
             super().__init__(**kwargs, color=color)
 
     def setup_logging(self):
