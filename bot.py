@@ -1,25 +1,14 @@
-import contextlib
 import logging
 import os
 from logging.handlers import RotatingFileHandler
 
 import discord
-
-uv = False
-with contextlib.suppress(ModuleNotFoundError):
-    import uvloop
-
-    uv = True
-
+import uvicorn
 from discord.ext import commands
 from dotenv import load_dotenv
 
 import cogs
 from helpers import constants
-from helpers.translator import CatTranslator
-
-if uv:
-    uvloop.install()
 
 
 class CatBot(commands.Bot):
@@ -60,7 +49,6 @@ class CatBot(commands.Bot):
     async def setup_hook(self):
         for i in cogs.default:
             await self.load_extension(f"cogs.{i}")
-        await self.tree.set_translator(CatTranslator())
         self.log.info("Bot loaded")
 
 
@@ -73,13 +61,17 @@ bot.activity = discord.Game("catlife!")
 
 
 @bot.command()
+@commands.is_owner()
 async def sync(ctx: commands.Context):
     await bot.tree.sync()
     await ctx.send("synced")
 
 
-if __name__ == "__main__":
+def main(bot):
     load_dotenv()
 
     bot.setup_logging()
     bot.run(os.getenv("BOT_TOKEN"), log_handler=None)
+
+if __name__ == "__main__":
+    uvicorn.main(main(bot))
