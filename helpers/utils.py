@@ -1,8 +1,9 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-import discord
+from discord import Embed, app_commands
 from discord.ext import commands
+from discord.interactions import Interaction
 
 import cogs
 
@@ -10,12 +11,15 @@ from .constants import BLUE, EMBED_COLOR
 
 
 class CatBot(commands.Bot):
-    class BlueEmbed(discord.Embed):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs, tree_cls=CatTree)
+
+    class BlueEmbed(Embed):
         def __init__(self, **kwargs):
             color = kwargs.pop("color", BLUE)
             super().__init__(**kwargs, color=color)
 
-    class Embed(discord.Embed):
+    class Embed(Embed):
         def __init__(self, **kwargs):
             color = kwargs.pop("color", EMBED_COLOR)
             super().__init__(**kwargs, color=color)
@@ -48,3 +52,9 @@ class CatBot(commands.Bot):
         for i in cogs.default:
             await self.load_extension(f"cogs.{i}")
         self.log.info("Bot loaded")
+
+
+class CatTree(app_commands.CommandTree):
+    async def interaction_check(self, i: Interaction):
+        await i.response.defer()
+        return True
