@@ -1,6 +1,6 @@
 import logging
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 from typing import Self
 
@@ -16,15 +16,15 @@ from .db import CATS
 
 class Cat:
     def __init__(
-        self, variant, born, health, energy, hunger, owner=None, name=None, id=None
+        self, variant: str, born, health, energy, hunger, owner=None, name=None, id=None
     ):
-        self.name: str = name or variant
+        self.name: str = name or variant.capitalize()
         self.born: datetime = born
-        self.age: str = format_timedelta(born)
+        self.age: str = format_timedelta(datetime.now() - born)
         self.health: int = health
         self.energy: int = energy
         self.hunger: int = hunger
-        self.variant: str = variant
+        self.variant = variant
         self.owner: User | None = owner
         self.id: int | None = id
 
@@ -38,6 +38,9 @@ class Cat:
         lowest = CATS.find_one(sort=[("_id", 1)])
         return lowest["_id"] + 1 or 1
 
+    def get_stats_string(self):
+        return f"{self.energy} {BOLT}\n{self.hunger} {HUNGER}"
+
     async def set_owner(self, user: User):
         self.owner = user
         await CATS.update_one()
@@ -50,17 +53,15 @@ class Cat:
     def embed_field_args(self):
         return {
             "name": f"{self.name}",
-            "value": get_stats_string(),
+            "value": self.get_stats_string(),
         }
 
 
 # CATS
 def get_random_stats(variant: str):
-    points = random.randint(60, 200)
-    if variant == "catvariant":
-        points = min(points * 1.2, 200)  # 20% boost
-    energy = points / 2
-    hunger = points / 2
+    hunger = random.uniform(30, 100)
+    energy = random.uniform(30, 100)
+
     return {
         "born": datetime.now(),
         "health": 10,
@@ -78,10 +79,6 @@ async def generate_cat() -> Cat:
 
 
 # FORMAT
-def get_stats_string(cat: Cat):
-    return f"{cat.energy} {BOLT}\n{cat.hunger} {HUNGER}"
-
-
 def singularize(amount, unit):
     """singularizer(?) - returns a string containing the amount
     and type of something. The type/unit of item will be pluralized
@@ -89,8 +86,9 @@ def singularize(amount, unit):
     return f"{amount} {amount == 1 and f'{unit}' or f'{unit}s'}"
 
 
-def format_timedelta(seconds: int) -> str:
+def format_timedelta(time: timedelta) -> str:
     """Converts a timedelta's total_seconds() to a humanized string."""
+    seconds = time.total_seconds()
     mins, secs = divmod(seconds, 60)
     hrs, mins = divmod(mins, 60)
     dys, hrs = divmod(hrs, 24)
@@ -106,8 +104,8 @@ class CatBot(commands.Bot):
 
     class Embed(Embed):
         def __new__(cls, **kwargs):
-            color = kwargs.pop("color", EMBED_COLOR)
-            return super().__new__(**kwargs, color=color)
+            cls.color = kwargs.pop("color", EMBED_COLOR)
+            return super().__new__(cls)
 
     def setup_logging(self):
         logging_format = logging.Formatter(
