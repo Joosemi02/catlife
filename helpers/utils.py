@@ -34,7 +34,7 @@ class Cat:
         pass
 
     def __eq__(self, cat: object) -> bool:
-        return isinstance(cat, Cat) and self.id == cat.id
+        return isinstance(cat, Cat) and self.id == cat.id and self.variant == cat.variant
 
     async def add_id(self):
         lowest = CATS.find_one(sort=[("_id", 1)])
