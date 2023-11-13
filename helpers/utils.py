@@ -76,7 +76,7 @@ def get_random_stats(variant: str):
     }
 
 
-async def generate_cat() -> Cat:
+def generate_cat() -> Cat:
     population = list(CAT_CHANCES.keys())
     weights = list(CAT_CHANCES.values())
     cat = random.choices(population, weights)[0]
