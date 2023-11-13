@@ -1,12 +1,14 @@
 import logging
 import random
 from datetime import datetime, timedelta
+from io import BytesIO
 from logging.handlers import RotatingFileHandler
 from typing import Self
 
-from discord import Embed, User, app_commands
+from discord import Embed, File, User, app_commands
 from discord.ext import commands
 from discord.interactions import Interaction
+from PIL import Image, ImageSequence
 
 import cogs
 
@@ -56,6 +58,10 @@ class Cat:
             "value": self.get_stats_string(),
         }
 
+    @property
+    def image(self):
+        return Image.open(f"data/animations/{self.variant}_6.gif")
+
 
 # CATS
 def get_random_stats(variant: str):
@@ -76,6 +82,35 @@ async def generate_cat() -> Cat:
     cat = random.choices(population, weights)[0]
     stats = get_random_stats(cat)
     return Cat(variant=cat, **stats)
+
+
+# IMAGES
+def merge_cat_images(cats: list[Cat]):
+    x_length = sum(cat.image.size[0] for cat in cats) + 40
+    y_length = max(cat.image.size[1] for cat in cats)
+
+    frames: list[Image.Image] = []
+    for frame_n in range(cats[0].image.n_frames):
+        image = Image.new(mode="RGBA", size=(x_length, y_length))
+        count = 0
+        for cat in cats:
+            frame = ImageSequence.Iterator(cat.image)[frame_n]
+            image.paste(frame, (count, 0))
+            count += cat.image.size[0] + 20
+        frames.append(image)
+
+    bytes_ = BytesIO()
+    frames[0].save(
+        bytes_,
+        format="GIF",
+        save_all=True,
+        append_images=frames[1:],
+        loop=0,
+        disposal=2,
+    )
+    bytes_.seek(0)
+
+    return File(bytes_, "attachment.gif")
 
 
 # FORMAT
