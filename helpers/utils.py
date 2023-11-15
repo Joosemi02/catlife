@@ -31,17 +31,19 @@ class Cat:
         self.id: int | None = id
 
     def __str__(self) -> str:
-        pass
+        return self.name
 
     def __eq__(self, cat: object) -> bool:
-        return isinstance(cat, Cat) and self.id == cat.id and self.variant == cat.variant
+        return (
+            isinstance(cat, Cat) and self.id == cat.id and self.variant == cat.variant
+        )
 
     async def add_id(self):
         lowest = CATS.find_one(sort=[("_id", 1)])
         return lowest["_id"] + 1 or 1
 
     def get_stats_string(self):
-        return f"{self.energy} {BOLT}\n{self.hunger} {HUNGER}"
+        return f"{self.energy} {BOLT} {self.hunger} {HUNGER}"
 
     async def set_owner(self, user: User):
         self.owner = user
@@ -56,6 +58,7 @@ class Cat:
         return {
             "name": f"{self.name}",
             "value": self.get_stats_string(),
+            "inline": True,
         }
 
     @property
