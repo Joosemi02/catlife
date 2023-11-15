@@ -18,7 +18,7 @@ class Cats(commands.Cog):
     async def start(self, i: Interaction):
         embed = self.bot.Embed(title="Pick your starter cat")
         cats = []
-        while len(cats) >3:
+        while len(cats) < 3:
             cat = generate_cat()
             if cat not in cats:
                 cats.append(cat)
